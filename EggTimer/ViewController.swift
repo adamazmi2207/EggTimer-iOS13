@@ -7,34 +7,68 @@
 //
 
 import UIKit
+import AVFoundation
 
 class ViewController: UIViewController {
     
-    var count = 60
+    var player: AVAudioPlayer!
+    
+    var totalTime: Float = 0.0
+    var secondsPassed: Float = 0.0
+    var secondsRemaining = 0
 
     @IBOutlet weak var countDownLabel: UILabel!
+    @IBOutlet weak var topTitle: UILabel!
+    @IBOutlet weak var progressBar: UIProgressView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        var timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(UIMenuController.update), userInfo: nil, repeats: true)
     }
 
-    @objc func update() {
-        if(count > 0) {
-            print("\(count) seconds to the end of the world")
-            countDownLabel.text = String(count)
-            count -= 1
-//            countDownLabel.text = String(count--)
-        }
-    }
-    
-    let eggTimes = ["Soft": 5, "Medium": 7, "Hard": 12]
+    let eggTimes: [String: Float] = ["Soft": 300.0, "Medium": 420.0, "Hard": 700.0]
+    var timer = Timer()
     
     @IBAction func hardnessSelected(_ sender: UIButton) {
         let hardness: String? = sender.currentTitle
-        
+        let eggTime: Float = eggTimes[hardness!]!
+
+        topTitle.text = hardness
+        progressBar.progress = 0.0
+        timer.invalidate()
        
-        print(eggTimes[hardness!]!)
+        totalTime = eggTime
+        secondsRemaining = Int(eggTime)
+        
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(UIMenuController.update), userInfo: nil, repeats: true)
     }
+    
+    func playSound(soundTitle: String) {
+            let url = Bundle.main.url(forResource: soundTitle, withExtension: "mp3")
+            player = try! AVAudioPlayer(contentsOf: url!)
+            player.play()
+    }
+    
+    @objc func update() {
+        if(secondsPassed < totalTime){
+            secondsPassed += 1
+            let percentageProgress = Float(secondsPassed / totalTime)
+            print("secondsPassed -> \(secondsPassed)")
+            print("totalTime -> \(totalTime)")
+            print("percentageProgress -> \(percentageProgress)")
+            print("//////////////////////////")
+            progressBar.progress = Float(percentageProgress)
+        }else if(secondsPassed == totalTime){
+            playSound(soundTitle: "alarm_sound")
+            topTitle.text = "DONE!"
+            timer.invalidate()
+            secondsPassed = 0
+        }
+        if(secondsRemaining >= 0) {
+            print("\(secondsRemaining) seconds left")
+            countDownLabel.text = String(secondsRemaining)
+            secondsRemaining -= 1
+        }
+    }
+    
+    
 }
